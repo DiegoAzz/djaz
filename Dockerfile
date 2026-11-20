@@ -12,7 +12,7 @@ COPY package.json package-lock.json* ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 
-# Install all workspace dependencies
+# Install all workspace dependencies (hoisted to /app/node_modules)
 RUN npm ci
 
 # 2. Builder stage for Web and API
@@ -20,8 +20,6 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY . .
 
 # Build both API and Web
@@ -39,9 +37,8 @@ ENV PORT=3000
 COPY package.json ./
 COPY apps/api/package.json ./apps/api/
 
-# Copy only production dependencies
+# Copy hoisted production node_modules
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 
 # Copy compiled backend code
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

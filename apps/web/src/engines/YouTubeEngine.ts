@@ -19,6 +19,7 @@ class YouTubeEngineManager {
   private onStateChangeCallbacks: Map<DeckId, StateChangeCallback> = new Map();
   private onErrorCallbacks: Map<DeckId, ErrorCallback> = new Map();
   private onReadyCallbacks: Map<DeckId, ReadyCallback> = new Map();
+  private lastVolumes: Map<DeckId, number> = new Map();
 
   public initApi(): Promise<void> {
     if (this.isApiLoaded && window.YT && window.YT.Player) {
@@ -173,10 +174,15 @@ class YouTubeEngineManager {
   }
 
   public setVolume(deckId: DeckId, volume: number) {
+    const clamped = Math.max(0, Math.min(100, Math.round(volume)));
+    if (this.lastVolumes.get(deckId) === clamped) {
+      return;
+    }
+    this.lastVolumes.set(deckId, clamped);
+
     const player = this.players.get(deckId);
     if (player && typeof player.setVolume === 'function') {
       try {
-        const clamped = Math.max(0, Math.min(100, Math.round(volume)));
         player.setVolume(clamped);
       } catch (e) {
         console.warn(`[YouTubeEngine] setVolume error Deck ${deckId}:`, e);

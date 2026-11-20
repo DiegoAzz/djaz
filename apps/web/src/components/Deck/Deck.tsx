@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Play,
   Pause,
@@ -7,7 +7,10 @@ import {
   Disc,
   Upload,
   Zap,
-  Repeat
+  Repeat,
+  Sliders,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { DeckId } from '../../types';
 import { useDjStore } from '../../stores/useDjStore';
@@ -45,6 +48,8 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
   const otherDeckId = isDeckA ? 'B' : 'A';
   const deck = useDjStore((s) => (isDeckA ? s.deckA : s.deckB));
   const isPlaying = deck.state === 'PLAYING';
+  const [showEQ, setShowEQ] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -129,8 +134,8 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
           </div>
         </div>
 
-        {/* BPM and Status pill */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* BPM, Status and Sizing controls */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-xs font-mono font-bold text-slate-300 bg-[#0c1017] px-2 py-0.5 rounded border border-[#242f42]">
             {deck.bpm ? `${deck.bpm} BPM` : '-- BPM'}
           </span>
@@ -145,12 +150,19 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
           >
             {deck.state}
           </span>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 rounded-md bg-[#0c1017] text-slate-400 hover:text-white border border-[#242f42] transition-colors"
+            title={isExpanded ? 'Tamaño normal del plato' : 'Agrandar / Estirar plato'}
+          >
+            {isExpanded ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+          </button>
         </div>
       </div>
 
       {/* 2. Main Deck Display: YouDJ Vinyl Turntable (or local waveform) */}
       <div className="space-y-2">
-        <VinylTurntable deckId={deckId} accentColor={accentColor} />
+        <VinylTurntable deckId={deckId} accentColor={accentColor} isExpanded={isExpanded} />
 
         {/* Local mode waveform below vinyl if in local mode */}
         {appMode === 'local' && (
@@ -286,11 +298,31 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
         </div>
       </div>
 
-      {/* 4. Bottom Controls: EQ & Pitch Sliders */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <EQSection deckId={deckId} accentColor={accentColor} />
-        <PitchControl deckId={deckId} accentColor={accentColor} />
+      {/* 4. Bottom Controls: Collapsible EQ & Pitch Sliders */}
+      <div className="flex justify-between items-center px-1 pt-0.5">
+        <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">
+          {showEQ ? 'ECUALIZADOR Y TEMPO ABIERTO' : 'PLATO COMPACTO PRO'}
+        </span>
+        <button
+          onClick={() => setShowEQ(!showEQ)}
+          className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 border transition-all ${
+            showEQ
+              ? 'bg-[#1e2837] text-white border-slate-500 shadow-sm'
+              : 'bg-[#121824] text-slate-400 hover:text-white border-[#242f42]'
+          }`}
+          title="Ver o esconder ecualizador y tempo"
+        >
+          <Sliders className="w-3 h-3" />
+          <span>{showEQ ? 'Ocultar EQ' : 'Ver EQ / Tempo'}</span>
+        </button>
       </div>
+
+      {showEQ && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn pt-1">
+          <EQSection deckId={deckId} accentColor={accentColor} />
+          <PitchControl deckId={deckId} accentColor={accentColor} />
+        </div>
+      )}
     </div>
   );
 };

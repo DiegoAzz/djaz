@@ -7,9 +7,10 @@ import { YouTubePlayerContainer } from './YouTubePlayerContainer';
 interface VinylTurntableProps {
   deckId: DeckId;
   accentColor: string;
+  isExpanded?: boolean;
 }
 
-export const VinylTurntable: React.FC<VinylTurntableProps> = ({ deckId, accentColor }) => {
+export const VinylTurntable: React.FC<VinylTurntableProps> = ({ deckId, accentColor, isExpanded = false }) => {
   const isDeckA = deckId === 'A';
   const deck = useDjStore((s) => (isDeckA ? s.deckA : s.deckB));
   const { togglePlayDeck, seekDeck } = useDjStore();
@@ -50,7 +51,9 @@ export const VinylTurntable: React.FC<VinylTurntableProps> = ({ deckId, accentCo
   };
 
   return (
-    <div className="relative w-full aspect-video min-h-[140px] max-h-[175px] bg-[#0c1017] rounded-xl overflow-hidden border border-[#242f42] flex items-center justify-center shadow-lg group select-none">
+    <div className={`relative w-full aspect-video ${
+      isExpanded ? 'min-h-[220px] max-h-[300px]' : 'min-h-[140px] max-h-[175px]'
+    } bg-[#0c1017] rounded-xl overflow-hidden border border-[#242f42] flex items-center justify-center shadow-lg group select-none transition-all duration-300`}>
       {/* Top Deck Mode Switcher: VIDEO vs VINYL */}
       <div className="absolute top-2 right-2 z-30 flex items-center bg-[#090d14]/90 p-0.5 rounded-xl border border-[#2a384f] shadow-lg backdrop-blur-md">
         <button

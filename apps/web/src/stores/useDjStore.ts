@@ -79,43 +79,47 @@ const getSavedSession = (): SavedSession | null => {
   return null;
 };
 
+let saveSessionTimer: any = null;
 const saveSessionToStorage = (crossfader: number, deckA: DeckState, deckB: DeckState) => {
-  try {
-    const session: SavedSession = {
-      crossfader,
-      deckA: {
-        track: deckA.track
-          ? {
-              id: deckA.track.id,
-              title: deckA.track.title,
-              artist: deckA.track.artist,
-              duration: deckA.track.duration,
-              durationFormatted: deckA.track.durationFormatted,
-              thumbnail: deckA.track.thumbnail,
-              youtubeId: deckA.track.youtubeId,
-              isLocal: deckA.track.isLocal
-            }
-          : null,
-        volume: deckA.volume
-      },
-      deckB: {
-        track: deckB.track
-          ? {
-              id: deckB.track.id,
-              title: deckB.track.title,
-              artist: deckB.track.artist,
-              duration: deckB.track.duration,
-              durationFormatted: deckB.track.durationFormatted,
-              thumbnail: deckB.track.thumbnail,
-              youtubeId: deckB.track.youtubeId,
-              isLocal: deckB.track.isLocal
-            }
-          : null,
-        volume: deckB.volume
-      }
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } catch {}
+  if (saveSessionTimer) clearTimeout(saveSessionTimer);
+  saveSessionTimer = setTimeout(() => {
+    try {
+      const session: SavedSession = {
+        crossfader,
+        deckA: {
+          track: deckA.track
+            ? {
+                id: deckA.track.id,
+                title: deckA.track.title,
+                artist: deckA.track.artist,
+                duration: deckA.track.duration,
+                durationFormatted: deckA.track.durationFormatted,
+                thumbnail: deckA.track.thumbnail,
+                youtubeId: deckA.track.youtubeId,
+                isLocal: deckA.track.isLocal
+              }
+            : null,
+          volume: deckA.volume
+        },
+        deckB: {
+          track: deckB.track
+            ? {
+                id: deckB.track.id,
+                title: deckB.track.title,
+                artist: deckB.track.artist,
+                duration: deckB.track.duration,
+                durationFormatted: deckB.track.durationFormatted,
+                thumbnail: deckB.track.thumbnail,
+                youtubeId: deckB.track.youtubeId,
+                isLocal: deckB.track.isLocal
+              }
+            : null,
+          volume: deckB.volume
+        }
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {}
+  }, 400);
 };
 
 const createInitialDeck = (deckId: DeckId): DeckState => ({
@@ -188,11 +192,14 @@ export const useDjStore = create<DjStoreState>((set, get) => {
       const clamped = Math.max(-1, Math.min(1, val));
       const { deckA, deckB } = get();
       const { effectiveVolA, effectiveVolB } = applyVolumes(deckA.volume, deckB.volume, clamped);
-      set({
+      const hasVolAChanged = deckA.effectiveVolume !== effectiveVolA;
+      const hasVolBChanged = deckB.effectiveVolume !== effectiveVolB;
+
+      set((state) => ({
         crossfader: clamped,
-        deckA: { ...deckA, effectiveVolume: effectiveVolA },
-        deckB: { ...deckB, effectiveVolume: effectiveVolB }
-      });
+        deckA: hasVolAChanged ? { ...state.deckA, effectiveVolume: effectiveVolA } : state.deckA,
+        deckB: hasVolBChanged ? { ...state.deckB, effectiveVolume: effectiveVolB } : state.deckB
+      }));
       saveSessionToStorage(clamped, deckA, deckB);
     },
 
@@ -225,10 +232,20 @@ export const useDjStore = create<DjStoreState>((set, get) => {
         targetPos,
         durationSec,
         (newPos, progress) => {
-          get().setCrossfader(newPos);
+          const clamped = Math.max(-1, Math.min(1, newPos));
+          const { deckA, deckB } = get();
+          const { effectiveVolA, effectiveVolB } = applyVolumes(deckA.volume, deckB.volume, clamped);
+          const hasVolAChanged = deckA.effectiveVolume !== effectiveVolA;
+          const hasVolBChanged = deckB.effectiveVolume !== effectiveVolB;
+
           set((state) => ({
+            crossfader: clamped,
+            deckA: hasVolAChanged ? { ...state.deckA, effectiveVolume: effectiveVolA } : state.deckA,
+            deckB: hasVolBChanged ? { ...state.deckB, effectiveVolume: effectiveVolB } : state.deckB,
             transition: { ...state.transition, progress }
           }));
+
+          saveSessionToStorage(clamped, deckA, deckB);
         },
         () => {
           set((state) => ({

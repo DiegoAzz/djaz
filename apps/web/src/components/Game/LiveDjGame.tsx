@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { Trophy, Volume2, VolumeX } from 'lucide-react';
 import { useDjStore } from '../../stores/useDjStore';
 
@@ -31,11 +31,14 @@ interface Collectible {
   angle: number;
 }
 
-export const LiveDjGame: React.FC = () => {
+export const LiveDjGame: React.FC = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const { deckA, deckB } = useDjStore();
+  const isPlayingA = useDjStore((s) => s.deckA.state === 'PLAYING');
+  const isPlayingB = useDjStore((s) => s.deckB.state === 'PLAYING');
+  const bpmA = useDjStore((s) => s.deckA.bpm);
+  const bpmB = useDjStore((s) => s.deckB.bpm);
 
   const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'GAMEOVER'>('IDLE');
   const [score, setScore] = useState(0);
@@ -128,10 +131,10 @@ export const LiveDjGame: React.FC = () => {
 
   // Calculate beat pulse from active music
   useEffect(() => {
-    const isPlaying = deckA.state === 'PLAYING' || deckB.state === 'PLAYING';
+    const isPlaying = isPlayingA || isPlayingB;
     if (!isPlaying) return;
 
-    const bpm = deckA.bpm || deckB.bpm || 124;
+    const bpm = bpmA || bpmB || 124;
     const intervalMs = (60 / bpm) * 1000;
 
     const pulseTimer = setInterval(() => {
@@ -139,7 +142,7 @@ export const LiveDjGame: React.FC = () => {
     }, intervalMs);
 
     return () => clearInterval(pulseTimer);
-  }, [deckA.state, deckB.state, deckA.bpm, deckB.bpm]);
+  }, [isPlayingA, isPlayingB, bpmA, bpmB]);
 
   // Jump trigger
   const handleJump = useCallback(() => {
@@ -670,4 +673,4 @@ export const LiveDjGame: React.FC = () => {
       </div>
     </div>
   );
-};
+});

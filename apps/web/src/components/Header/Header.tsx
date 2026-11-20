@@ -21,6 +21,8 @@ interface HeaderProps {
   isSearching: boolean;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  layoutMode?: 'left' | 'bottom';
+  onToggleLayout?: (mode: 'left' | 'bottom') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -78,11 +80,11 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="hidden xs:block sm:block">
           <div className="flex items-center gap-0.5 sm:gap-1">
-            <span className="font-black text-base sm:text-lg tracking-tight text-white">MINI</span>
-            <span className="font-black text-base sm:text-lg tracking-tight text-[#FF6B00]">DJ</span>
+            <span className="font-black text-lg sm:text-xl tracking-tight text-white">Dj</span>
+            <span className="font-black text-lg sm:text-xl tracking-tight bg-gradient-to-r from-[#FF6B00] to-[#FF0055] bg-clip-text text-transparent">Az</span>
           </div>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 block -mt-1 font-semibold">
-            Live Streaming
+            Live Streaming Engine
           </span>
         </div>
       </div>

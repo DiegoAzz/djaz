@@ -110,12 +110,12 @@ export const LiveDjGame: React.FC = () => {
       jumpCount: 0,
       rotation: 0
     },
-    gravity: 0.45,
-    jumpForce: -7.5,
+    gravity: 0.82,
+    jumpForce: -11.2,
     obstacles: [] as Obstacle[],
     collectibles: [] as Collectible[],
     particles: [] as Particle[],
-    speed: 3.2,
+    speed: 5.4,
     floorY: 175,
     nextObstacleDist: 90,
     beatPulse: 0
@@ -191,7 +191,7 @@ export const LiveDjGame: React.FC = () => {
     const g = gameRef.current;
     g.score = 0;
     g.combo = 0;
-    g.speed = 3.2;
+    g.speed = 5.4;
     g.player.y = 140;
     g.player.vy = 0;
     g.player.jumpCount = 0;
@@ -304,8 +304,8 @@ export const LiveDjGame: React.FC = () => {
         // Rotate vinyl disc while moving
         g.player.rotation += 0.15 + g.speed * 0.02;
 
-        // Increase speed slowly
-        g.speed = Math.min(6.5, 3.2 + g.score * 0.006);
+        // Increase speed dynamically
+        g.speed = Math.min(8.5, 5.4 + g.score * 0.008);
 
         // Spawn obstacles
         g.nextObstacleDist -= g.speed;
@@ -568,7 +568,7 @@ export const LiveDjGame: React.FC = () => {
         ctx.textAlign = 'center';
         ctx.font = 'bold 13px system-ui, sans-serif';
         ctx.fillStyle = '#00B8FF';
-        ctx.fillText('🎮 MINI DJ RUNNER', width / 2, height / 2 - 14);
+        ctx.fillText('🎮 DJAZ RUNNER', width / 2, height / 2 - 14);
 
         ctx.font = '10px system-ui, sans-serif';
         ctx.fillStyle = '#ffffff';
@@ -644,8 +644,11 @@ export const LiveDjGame: React.FC = () => {
 
       {/* Main Interactive Canvas Area (Responsive aspect ratio) */}
       <div
-        className="relative w-full aspect-[16/10] sm:aspect-[16/11] max-h-[220px] cursor-pointer touch-none"
-        onClick={handleJump}
+        className="relative w-full aspect-[16/10] sm:aspect-[16/11] max-h-[220px] cursor-pointer touch-none active:scale-[0.99] transition-transform"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          handleJump();
+        }}
         onTouchStart={(e) => {
           e.preventDefault();
           handleJump();

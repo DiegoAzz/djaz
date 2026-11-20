@@ -63,7 +63,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col h-full space-y-2.5 min-h-0 overflow-hidden">
       {/* Alert banner if present */}
       {warning && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
@@ -80,7 +80,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       )}
 
       {/* YouDJ Style Song Grid / Rows */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 overflow-y-auto flex-1 pr-1 pb-2">
         {results.map((item) => (
           <div
             key={item.id}

@@ -353,6 +353,15 @@ class LocalAudioEngineManager {
     return Math.min(1.0, rms * 3.5); // Normalized RMS level 0 - 1
   }
 
+  public getFrequencyData(deckId: DeckId): Uint8Array | null {
+    const deck = this.decks.get(deckId);
+    if (!deck || !deck.isPlaying) return null;
+
+    const dataArray = new Uint8Array(deck.analyserNode.frequencyBinCount);
+    deck.analyserNode.getByteFrequencyData(dataArray);
+    return dataArray;
+  }
+
   /**
    * Generates a realistic synthetic impulse response for reverb
    */

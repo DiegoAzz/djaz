@@ -95,7 +95,7 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
 
   return (
     <div
-      className={`flex-1 bg-[#121722] rounded-2xl border p-3.5 flex flex-col gap-3 transition-all shadow-2xl ${
+      className={`flex-1 bg-[#121722] rounded-xl border p-2 sm:p-2.5 flex flex-col gap-2 transition-all shadow-xl ${
         isDeckA
           ? 'border-[#FF6B00]/30 hover:border-[#FF6B00]/60'
           : 'border-[#FF0055]/30 hover:border-[#FF0055]/60'
@@ -186,18 +186,18 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
           {/* CUE Button (Round Pioneer/YouDJ button) */}
           <button
             onClick={() => cueDeck(deckId)}
-            className="w-12 h-12 rounded-full bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-black text-xs border-2 border-amber-500/60 transition-all flex flex-col items-center justify-center shadow-lg active:scale-95"
+            className="w-10 h-10 rounded-full bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-black font-black text-xs border-2 border-amber-500/60 transition-all flex flex-col items-center justify-center shadow-md active:scale-95"
             title={`Punto CUE (${isDeckA ? 'Tecla Q' : 'Tecla P'})`}
           >
-            <span>CUE</span>
-            <span className="text-[8px] opacity-75 font-mono">{isDeckA ? 'Q' : 'P'}</span>
+            <span className="text-[10px]">CUE</span>
+            <span className="text-[7px] opacity-75 font-mono">{isDeckA ? 'Q' : 'P'}</span>
           </button>
 
           {/* PLAY / PAUSE Button (Big Glowing Round Button) */}
           <button
             onClick={() => togglePlayDeck(deckId)}
             disabled={!deck.track}
-            className={`w-14 h-14 rounded-full font-black text-xs tracking-wider transition-all flex flex-col items-center justify-center shadow-xl active:scale-95 disabled:opacity-40 disabled:pointer-events-none ${
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full font-black text-xs tracking-wider transition-all flex flex-col items-center justify-center shadow-lg active:scale-95 disabled:opacity-40 disabled:pointer-events-none ${
               isPlaying
                 ? 'bg-emerald-500 text-black shadow-emerald-500/40 border-2 border-emerald-300'
                 : 'text-white border-2'

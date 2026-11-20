@@ -3,6 +3,7 @@ import { useDjStore } from '../../stores/useDjStore';
 import { localAudioEngine } from '../../engines/LocalAudioEngine';
 import { Sparkles, StopCircle, Gamepad2, Sliders } from 'lucide-react';
 import { LiveDjGame } from '../Game/LiveDjGame';
+import { MasterSpectrumVisualizer } from './MasterSpectrumVisualizer';
 
 export const Mixer: React.FC = () => {
   const {
@@ -232,6 +233,9 @@ export const Mixer: React.FC = () => {
           <span>{Math.round(deckB.effectiveVolume)}%</span>
         </div>
       </div>
+
+      {/* 5. Master Output Audio Spectrum Visualizer (Fills bottom gap aligned with EQ boxes) */}
+      <MasterSpectrumVisualizer />
     </div>
   );
 };

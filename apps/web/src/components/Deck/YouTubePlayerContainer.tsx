@@ -79,7 +79,7 @@ export const YouTubePlayerContainer: React.FC<YouTubePlayerContainerProps> = ({ 
   }, [deck.track?.youtubeId, deckId]);
 
   return (
-    <div className="relative w-full aspect-video min-h-[190px] max-h-[260px] bg-black rounded-xl overflow-hidden border border-[#242f42] flex items-center justify-center shadow-inner">
+    <div className="relative w-full aspect-video min-h-[140px] max-h-[175px] bg-black rounded-xl overflow-hidden border border-[#242f42] flex items-center justify-center shadow-inner">
       {/* Target iframe element for official video player */}
       <div
         id={containerId}

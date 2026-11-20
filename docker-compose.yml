@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  djaz:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: djaz-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

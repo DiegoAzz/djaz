@@ -1,0 +1,19 @@
+{
+  "name": "djaz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DJAZ - Plataforma web de mezcla musical interactiva para TikTok Live y DJing profesional",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"API,WEB\" -c \"blue,magenta\" \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "start": "node apps/api/dist/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

@@ -164,6 +164,16 @@ if (saved?.deckB?.track) {
 
 const initialCrossfader = saved?.crossfader ?? 0;
 
+type TrackEndedListener = (deckId: DeckId) => void;
+const trackEndedListeners: TrackEndedListener[] = [];
+export const registerTrackEndedListener = (fn: TrackEndedListener) => {
+  trackEndedListeners.push(fn);
+  return () => {
+    const idx = trackEndedListeners.indexOf(fn);
+    if (idx !== -1) trackEndedListeners.splice(idx, 1);
+  };
+};
+
 export const useDjStore = create<DjStoreState>((set, get) => {
   const applyVolumes = (volA: number, volB: number, crossfader: number) => {
     const { effectiveVolA, effectiveVolB } = CrossfaderEngine.calculateEffectiveVolumes(volA, volB, crossfader);
@@ -292,6 +302,16 @@ export const useDjStore = create<DjStoreState>((set, get) => {
       set((s) => ({
         [deckKey]: { ...s[deckKey], state }
       }));
+
+      if (state === 'ENDED') {
+        trackEndedListeners.forEach((fn) => {
+          try {
+            fn(deckId);
+          } catch (e) {
+            console.error('[TrackEndedListener Error]', e);
+          }
+        });
+      }
     },
 
     setTime: (deckId, currentTime, duration) => {
@@ -507,8 +527,11 @@ export const useDjStore = create<DjStoreState>((set, get) => {
       const { appMode } = get();
 
       if (appMode === 'youtube') {
+        // Always enforce crossfader volume before playing to prevent bleeding on inactive deck!
+        youtubeEngine.setVolume(deckId, deck.effectiveVolume, true);
         youtubeEngine.play(deckId);
       } else {
+        localAudioEngine.setVolume(deckId, deck.effectiveVolume / 100);
         localAudioEngine.play(deckId, undefined, () => {
           get().setPlaybackState(deckId, 'ENDED');
         });

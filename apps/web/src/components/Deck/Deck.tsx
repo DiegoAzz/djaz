@@ -19,6 +19,7 @@ import { WaveformCanvas } from './WaveformCanvas';
 import { EQSection } from './EQSection';
 import { PitchControl } from './PitchControl';
 import { localAudioEngine } from '../../engines/LocalAudioEngine';
+import { youtubeEngine } from '../../engines/YouTubeEngine';
 import { formatTime } from '../../utils/formatTime';
 
 interface DeckProps {
@@ -50,6 +51,26 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
   const isPlaying = deck.state === 'PLAYING';
   const [showEQ, setShowEQ] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDropTrack = (item: any) => {
+    const ytId = item.youtubeId || item.id;
+    setTrack(deckId, {
+      id: item.id,
+      title: item.title,
+      artist: item.channelTitle || item.artist || 'Artista',
+      duration: 0,
+      durationFormatted: item.duration || '0:00',
+      thumbnail: item.thumbnail,
+      youtubeId: ytId,
+      isLocal: item.isLocal || false
+    });
+
+    setPlaybackState(deckId, 'LOADING');
+    if (ytId) {
+      youtubeEngine.loadVideo(deckId, ytId, false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,12 +121,54 @@ export const Deck: React.FC<DeckProps> = ({ deckId }) => {
 
   return (
     <div
-      className={`flex-1 bg-[#121722] rounded-xl border p-2 sm:p-2.5 flex flex-col gap-2 transition-all shadow-xl ${
-        isDeckA
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        if (!isDragOver) setIsDragOver(true);
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsDragOver(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const raw = e.dataTransfer.getData('application/json');
+        if (raw) {
+          try {
+            const item = JSON.parse(raw);
+            handleDropTrack(item);
+          } catch (err) {
+            console.error('[Drop Error]', err);
+          }
+        }
+      }}
+      className={`relative flex-1 bg-[#121722] rounded-xl border p-2 sm:p-2.5 flex flex-col gap-2 transition-all shadow-xl ${
+        isDragOver
+          ? isDeckA
+            ? 'border-2 border-dashed border-[#FF6B00] shadow-[0_0_25px_rgba(255,107,0,0.5)] bg-[#1c1822]'
+            : 'border-2 border-dashed border-[#FF0055] shadow-[0_0_25px_rgba(255,0,85,0.5)] bg-[#201522]'
+          : isDeckA
           ? 'border-[#FF6B00]/30 hover:border-[#FF6B00]/60'
           : 'border-[#FF0055]/30 hover:border-[#FF0055]/60'
       }`}
     >
+      {/* Drop Zone Visual Overlay on Drag */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-40 rounded-xl bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center border-2 border-dashed border-white/60 pointer-events-none animate-pulse">
+          <Disc className="w-12 h-12 mb-2 animate-spin" style={{ color: accentColor }} />
+          <span className="text-sm font-black uppercase tracking-wider text-white" style={{ color: accentColor }}>
+            SOLTAR PARA CARGAR EN PLATO {deckId}
+          </span>
+          <span className="text-[10px] text-slate-300 font-bold mt-1">
+            Se cargará directamente en la tornamesa
+          </span>
+        </div>
+      )}
       {/* 1. Deck Header: Deck Badge & Track Name */}
       <div className="flex items-center justify-between border-b border-[#242f42] pb-2">
         <div className="flex items-center gap-2.5 min-w-0">

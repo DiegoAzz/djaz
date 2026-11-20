@@ -3,16 +3,22 @@ import {
   Search,
   Plus,
   Play,
+  Pause,
+  SkipBack,
+  SkipForward,
   Trash2,
   Flame,
   Disc,
   X,
   Check,
   ListMusic,
-  Headphones
+  Headphones,
+  Radio,
+  GripVertical
 } from 'lucide-react';
 import { usePlaylistStore } from '../../stores/usePlaylistStore';
 import { useDjStore } from '../../stores/useDjStore';
+import { useAutoDjStore } from '../../stores/useAutoDjStore';
 import { SearchResultItem, PlaylistItem, DeckId } from '../../types';
 import { youtubeEngine } from '../../engines/YouTubeEngine';
 
@@ -57,6 +63,18 @@ export const SidebarSongBrowser: React.FC<SidebarSongBrowserProps> = ({
   } = usePlaylistStore();
 
   const { setTrack, setPlaybackState } = useDjStore();
+  const {
+    isAutoDjActive,
+    activePlaylistId: autoDjPlaylistId,
+    currentTrackIndex,
+    activeDeck: autoDjActiveDeck,
+    loopMode,
+    toggleAutoDj,
+    startAutoDj,
+    skipNext,
+    skipPrev,
+    toggleLoop
+  } = useAutoDjStore();
 
   const [activeTab, setActiveTab] = useState<'search' | 'playlists'>('search');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('cat-tiktok');
@@ -295,10 +313,18 @@ export const SidebarSongBrowser: React.FC<SidebarSongBrowserProps> = ({
               {searchResults.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#131924]/85 border border-[#242f42]/70 hover:border-slate-500 hover:bg-[#1a2333] transition-all group"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify(item));
+                    e.dataTransfer.setData('text/plain', item.id);
+                    e.dataTransfer.effectAllowed = 'copy';
+                  }}
+                  className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#131924]/85 border border-[#242f42]/70 hover:border-[#00B8FF]/60 hover:bg-[#1a2333] transition-all group cursor-grab active:cursor-grabbing select-none"
+                  title="Arrastra esta canción y suéltala sobre Plato A o Plato B para cargarla directamente"
                 >
-                  {/* Thumbnail & Title */}
-                  <div className="flex items-center gap-2 min-w-0">
+                  {/* Grip Handle + Thumbnail & Title */}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <GripVertical className="w-3 h-3 text-slate-600 group-hover:text-slate-300 shrink-0" />
                     <div className="relative w-12 h-9 shrink-0 rounded-lg overflow-hidden bg-black/60 shadow">
                       <img
                         src={item.thumbnail}
@@ -379,6 +405,92 @@ export const SidebarSongBrowser: React.FC<SidebarSongBrowserProps> = ({
               )}
             </div>
 
+            {/* Auto-DJ Continuous Playback Controller Banner */}
+            {activePlaylistItems.length > 0 && (
+              <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#121a29] to-[#1c182a] border border-[#00B8FF]/40 space-y-2 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      {isAutoDjActive && autoDjPlaylistId === activePlaylist.id && (
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      )}
+                      <span
+                        className={`relative inline-flex rounded-full h-2 w-2 ${
+                          isAutoDjActive && autoDjPlaylistId === activePlaylist.id ? 'bg-emerald-500' : 'bg-slate-600'
+                        }`}
+                      />
+                    </span>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-white flex items-center gap-1">
+                      AUTO-DJ DE PLAYLIST
+                      <span className="text-[8px] bg-red-950/80 text-red-400 border border-red-500/30 px-1 py-0.2 rounded font-bold">
+                        EN VIVO
+                      </span>
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={toggleLoop}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${
+                      loopMode
+                        ? 'bg-[#00F0FF]/20 text-[#00F0FF] border-[#00F0FF]/40 shadow-sm'
+                        : 'bg-black/40 text-slate-500 border-white/10'
+                    }`}
+                    title={loopMode ? 'Bucle activado: al terminar la lista vuelve a empezar' : 'Bucle desactivado'}
+                  >
+                    🔁 BUCLE
+                  </button>
+                </div>
+
+                {/* Primary Auto-DJ Play/Pause Button */}
+                <button
+                  onClick={() => toggleAutoDj(activePlaylist.id)}
+                  className={`w-full py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md ${
+                    isAutoDjActive && autoDjPlaylistId === activePlaylist.id
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-emerald-500/20 animate-pulse'
+                      : 'bg-gradient-to-r from-[#FF6B00] to-[#FF0055] text-white hover:brightness-110 active:scale-98'
+                  }`}
+                >
+                  {isAutoDjActive && autoDjPlaylistId === activePlaylist.id ? (
+                    <>
+                      <Pause className="w-4 h-4 fill-current" />
+                      <span>DETENER AUTO-DJ ({currentTrackIndex + 1}/{activePlaylistItems.length})</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>REPRODUCIR TODA LA LISTA</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Live Controls if Active */}
+                {isAutoDjActive && autoDjPlaylistId === activePlaylist.id && (
+                  <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-white/10 px-1">
+                    <button
+                      onClick={skipPrev}
+                      className="flex items-center gap-1 text-slate-400 hover:text-white font-bold transition-colors"
+                      title="Canción anterior de la lista"
+                    >
+                      <SkipBack className="w-3.5 h-3.5" />
+                      <span>Anterior</span>
+                    </button>
+                    <span className="text-[10px] font-mono text-emerald-400 font-black flex items-center gap-1">
+                      <Radio className="w-3 h-3 animate-spin" />
+                      Plato {autoDjActiveDeck} al aire
+                    </span>
+                    <button
+                      onClick={skipNext}
+                      className="flex items-center gap-1 text-slate-400 hover:text-white font-bold transition-colors"
+                      title="Pasar a la siguiente canción con AutoMix"
+                    >
+                      <span>Siguiente</span>
+                      <SkipForward className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activePlaylistItems.length === 0 ? (
               <div className="text-center py-16 text-slate-500">
                 <ListMusic className="w-8 h-8 text-[#00B8FF] opacity-40 mx-auto mb-2" />
@@ -386,21 +498,60 @@ export const SidebarSongBrowser: React.FC<SidebarSongBrowserProps> = ({
                 <p className="text-[10px] text-slate-500 mt-1">Busca canciones y pulsa "+" para agregarlas.</p>
               </div>
             ) : (
-              activePlaylistItems.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#131924]/85 border border-[#242f42]/70 hover:border-slate-500 transition-all group"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[10px] font-mono text-slate-500 w-3">{idx + 1}</span>
-                    {item.thumbnail && (
-                      <img src={item.thumbnail} alt={item.title} className="w-10 h-7 rounded object-cover shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">{item.title}</h4>
-                      <p className="text-[10px] text-slate-400 truncate">{item.artist}</p>
+              activePlaylistItems.map((item, idx) => {
+                const isTrackLive =
+                  isAutoDjActive && autoDjPlaylistId === activePlaylist.id && currentTrackIndex === idx;
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('application/json', JSON.stringify(item));
+                      e.dataTransfer.setData('text/plain', item.id);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    className={`flex items-center justify-between gap-2 p-2 rounded-xl transition-all group cursor-grab active:cursor-grabbing select-none ${
+                      isTrackLive
+                        ? 'bg-[#0e2221] border border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                        : 'bg-[#131924]/85 border border-[#242f42]/70 hover:border-[#00B8FF]/60 hover:bg-[#1a2333]'
+                    }`}
+                    title="Arrastra esta canción y suéltala sobre Plato A o Plato B para cargarla directamente"
+                  >
+                    <div
+                      onClick={() => startAutoDj(activePlaylist.id, idx)}
+                      className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer"
+                      title="Haz clic para iniciar Auto-DJ desde esta canción"
+                    >
+                      <GripVertical className="w-3 h-3 text-slate-600 group-hover:text-slate-300 shrink-0" />
+                      <span className="text-[10px] font-mono text-slate-500 w-3">
+                        {isTrackLive ? '▶' : idx + 1}
+                      </span>
+                      {item.thumbnail && (
+                        <img
+                          src={item.thumbnail}
+                          alt={item.title}
+                          className="w-10 h-7 rounded object-cover shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <h4
+                            className={`text-xs font-bold truncate ${
+                              isTrackLive ? 'text-emerald-400' : 'text-white'
+                            }`}
+                          >
+                            {item.title}
+                          </h4>
+                          {isTrackLive && (
+                            <span className="text-[8px] font-black uppercase tracking-wider text-black bg-emerald-400 px-1 rounded shrink-0 animate-pulse">
+                              AL AIRE
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 truncate">{item.artist}</p>
+                      </div>
                     </div>
-                  </div>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -426,7 +577,8 @@ export const SidebarSongBrowser: React.FC<SidebarSongBrowserProps> = ({
                     </button>
                   </div>
                 </div>
-              ))
+              );
+            })
             )}
           </>
         )}

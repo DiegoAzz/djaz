@@ -36,6 +36,10 @@ export const YouTubePlayerContainer: React.FC<YouTubePlayerContainerProps> = ({ 
             }
           },
           onStateChange: (_dId, state) => {
+            if (state === 'PLAYING') {
+              const currentDeck = useDjStore.getState()[deckId === 'A' ? 'deckA' : 'deckB'];
+              youtubeEngine.setVolume(deckId, currentDeck.effectiveVolume, true);
+            }
             setPlaybackState(deckId, state);
           },
           onError: (_dId, msg) => {

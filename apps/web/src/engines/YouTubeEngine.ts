@@ -122,6 +122,9 @@ class YouTubeEngineManager {
   }
 
   public loadVideo(deckId: DeckId, videoId: string, autoplay = false) {
+    // Invalidate cached volume so the new video always receives its correct crossfader volume
+    this.lastVolumes.delete(deckId);
+
     const player = this.players.get(deckId);
     if (!player || typeof player.cueVideoById !== 'function') {
       // Store in pending queue if player isn't ready yet
@@ -144,6 +147,16 @@ class YouTubeEngineManager {
     const player = this.players.get(deckId);
     if (player && typeof player.playVideo === 'function') {
       try {
+        const lastVol = this.lastVolumes.get(deckId);
+        if (lastVol !== undefined) {
+          if (lastVol <= 0) {
+            if (typeof player.mute === 'function') player.mute();
+            if (typeof player.setVolume === 'function') player.setVolume(0);
+          } else {
+            if (typeof player.unMute === 'function') player.unMute();
+            if (typeof player.setVolume === 'function') player.setVolume(lastVol);
+          }
+        }
         player.playVideo();
       } catch (e) {
         console.warn(`[YouTubeEngine] playVideo error Deck ${deckId}:`, e);
@@ -173,17 +186,24 @@ class YouTubeEngineManager {
     }
   }
 
-  public setVolume(deckId: DeckId, volume: number) {
+  public setVolume(deckId: DeckId, volume: number, force = false) {
     const clamped = Math.max(0, Math.min(100, Math.round(volume)));
-    if (this.lastVolumes.get(deckId) === clamped) {
+    if (!force && this.lastVolumes.get(deckId) === clamped) {
       return;
     }
     this.lastVolumes.set(deckId, clamped);
 
     const player = this.players.get(deckId);
-    if (player && typeof player.setVolume === 'function') {
+    if (player) {
       try {
-        player.setVolume(clamped);
+        if (typeof player.setVolume === 'function') {
+          player.setVolume(clamped);
+        }
+        if (clamped <= 0) {
+          if (typeof player.mute === 'function') player.mute();
+        } else {
+          if (typeof player.unMute === 'function') player.unMute();
+        }
       } catch (e) {
         console.warn(`[YouTubeEngine] setVolume error Deck ${deckId}:`, e);
       }
